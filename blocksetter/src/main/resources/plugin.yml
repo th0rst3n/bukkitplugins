@@ -1,0 +1,3 @@
+name: BlockSetter
+main: me.c0sm0cat.bukkit.BlockSetter.BlockSetterPlugin
+version: 1.0.0
