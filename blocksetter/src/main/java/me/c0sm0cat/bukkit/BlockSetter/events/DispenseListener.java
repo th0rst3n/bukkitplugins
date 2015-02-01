@@ -17,6 +17,29 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.MaterialData;
 import org.bukkit.plugin.java.JavaPlugin;
 
+/**
+ * @author th0rst3n
+ * 
+ * Listener class for BlockDispenseEvents. Catches events, checks if preconditions for placing a block are given and sets
+ * the block the dispenser faces to the dispensed material.
+ *
+ */
+/**
+ * @author thorsten
+ *
+ */
+/**
+ * @author thorsten
+ *
+ */
+/**
+ * @author thorsten
+ *
+ */
+/**
+ * @author thorsten
+ *
+ */
 public class DispenseListener implements Listener {
 
 	private static final Material ACTIVATION_MATERIAL = Material.EYE_OF_ENDER;
@@ -25,6 +48,7 @@ public class DispenseListener implements Listener {
 	private boolean isRegistered = false;
 	private JavaPlugin plugin;
 
+	// self-registering constructor
 	public DispenseListener(JavaPlugin plugin) {
 		this.plugin = plugin;
 		plugin.getServer().getPluginManager().registerEvents(this, plugin);
@@ -35,6 +59,8 @@ public class DispenseListener implements Listener {
 		return isRegistered;
 	}
 
+	// main event handler method. Event gets cancelled if all preconditions are
+	// given to prevent normal item dispensing
 	@EventHandler
 	public void onDispense(BlockDispenseEvent event) {
 		if (checkPreconditions(event)) {
@@ -49,6 +75,7 @@ public class DispenseListener implements Listener {
 		}
 	}
 
+	// method for placing the block in front of the dispenser
 	private void setBlock(BlockDispenseEvent event) {
 		Dispenser dispenser = (Dispenser) event.getBlock().getState();
 		org.bukkit.material.Dispenser mDispenser = (org.bukkit.material.Dispenser) dispenser.getData();
@@ -60,6 +87,9 @@ public class DispenseListener implements Listener {
 			sendDebugToAllPlayers("Dispensed item is a " + item.getType());
 		}
 
+		// the activation item may also get dispensed. in that case another
+		// ItemStack must be dispensed, as the activation item must stay in the
+		// dispenser
 		if (item.getType() == ACTIVATION_MATERIAL) {
 			item = findPlaceableItemInDispenser(dispenser);
 			if (item == null) {
@@ -77,12 +107,15 @@ public class DispenseListener implements Listener {
 		removeItemFromDispenserInventory(item, dispenser);
 	}
 
+	// meta method for handling item removing from the dispensers inv
 	private void removeItemFromDispenserInventory(ItemStack item, Dispenser dispenser) {
 		Inventory inventory = dispenser.getInventory();
 		removeSingleItemFromInventory(item, inventory);
 		dispenser.update(true);
 	}
 
+	// method for manually removing the placed item from the dispenser. As the
+	// event got cancelled, this must be done manually
 	private void removeSingleItemFromInventory(ItemStack item, Inventory inventory) {
 		int amount = 0;
 		for (ItemStack is : inventory.all(item.getType()).values()) {
@@ -94,6 +127,9 @@ public class DispenseListener implements Listener {
 			return;
 		}
 
+		// securely removing a single item from a dispenser inv seems to be a
+		// hassle, so looping through the inventory is currently the only
+		// working way for removing an item
 		ItemStack[] invContents = inventory.getContents();
 		for (int i = 0; i < invContents.length; i++) {
 			ItemStack nextItem = invContents[i];
@@ -110,12 +146,16 @@ public class DispenseListener implements Listener {
 		}
 	}
 
+	// meta method for searching for placeable items in the dispensers inv
 	private ItemStack findPlaceableItemInDispenser(Dispenser dispenser) {
 		Inventory inventory = dispenser.getInventory();
 		ItemStack result = findPlaceableItemInInventory(inventory);
 		return result;
 	}
 
+	// method for finding a placeable item in the dispenser inv in case the
+	// originally dispensed item was the activation item, which has to stay in
+	// the dispensers inv
 	private ItemStack findPlaceableItemInInventory(Inventory inventory) {
 		ItemStack[] invContents = inventory.getContents();
 		for (int i = 0; i < invContents.length; i++) {
@@ -128,6 +168,14 @@ public class DispenseListener implements Listener {
 		return null;
 	}
 
+	// method for checking preconditions, if a dispensed item can be placed as a
+	// block instead of beeing dispensed as an item
+	// preconditions are:
+	// - block dispensing must be a dispenser (not a dropper)
+	// - at least one item of the activation material must be in the dispensers
+	// inv
+	// - the item dispensed must be placeable as a block
+	// - the block the dispenser is facing must be of a replaceable type
 	private boolean checkPreconditions(BlockDispenseEvent event) {
 		if (!(event.getBlock().getState() instanceof Dispenser)) {
 			plugin.getLogger().log(Level.FINEST, "Block dispensing is not a dispenser");
@@ -172,6 +220,8 @@ public class DispenseListener implements Listener {
 		return true;
 	}
 
+	// method to avoid dispensing the activation item in case the preconditions
+	// were not given
 	private void avoidDispensingActivationItem(BlockDispenseEvent event) {
 		ItemStack item = event.getItem();
 		if (item.getType() == ACTIVATION_MATERIAL) {
@@ -183,17 +233,23 @@ public class DispenseListener implements Listener {
 		}
 	}
 
+	// funny little helper method to annoy players ;)
 	private void sendDebugToAllPlayers(String message) {
 		for (Player player : Bukkit.getOnlinePlayers()) {
 			player.sendMessage("[BlockSetter - DEBUG] " + message);
 		}
 	}
 
+	// method to check the material of the block the dispenser is facing at.
+	// Only if the block is one of the listed materials the block material will
+	// be replaced
 	private boolean isReplacableMaterial(Material material) {
 		return material == Material.AIR || material == Material.LAVA || material == Material.WATER || material == Material.GRASS || material == Material.LONG_GRASS || material == Material.VINE || material == Material.STATIONARY_LAVA || material == Material.STATIONARY_WATER
 				|| material == Material.SNOW || material == Material.DEAD_BUSH || material == Material.FIRE;
 	}
 
+	// method for replacing the material of the given block to the material of
+	// the given item stack
 	private void setBlockMaterialFromItem(Block block, ItemStack item) {
 		MaterialData materialData = item.getData();
 		Material material = item.getType();
