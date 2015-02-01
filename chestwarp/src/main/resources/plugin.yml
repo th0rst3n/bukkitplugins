@@ -1,0 +1,3 @@
+name: ChestWarp
+main: me.c0sm0cat.bukkit.ChestWarp.ChestWarpPlugin
+version: 1.0.0
